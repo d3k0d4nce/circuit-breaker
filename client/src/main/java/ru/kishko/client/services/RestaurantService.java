@@ -60,10 +60,12 @@ public class RestaurantService {
     }
 
     public String getRestaurantWithReviews(Long restaurantId) {
-
-        String reviews = webReviewClient.get().uri("/restaurants/" + restaurantId).retrieve().bodyToMono(String.class).block();
-
-        return getRestaurantById(restaurantId).getName() + reviews;
+        try {
+            String reviews = webReviewClient.get().uri("/restaurants/" + restaurantId).retrieve().bodyToMono(String.class).block();
+            return getRestaurantById(restaurantId).getName() + reviews;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get reviews for restaurant " + restaurantId, e);
+        }
     }
 
 }
