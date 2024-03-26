@@ -2,7 +2,9 @@ package ru.kishko.client.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Limit;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClient;
 import ru.kishko.client.dtos.RestaurantDTO;
 import ru.kishko.client.entities.Restaurant;
@@ -64,7 +66,7 @@ public class RestaurantService {
             String reviews = webReviewClient.get().uri("/restaurants/" + restaurantId).retrieve().bodyToMono(String.class).block();
             return getRestaurantById(restaurantId).getName() + reviews;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to get reviews for restaurant " + restaurantId, e);
+            throw new HttpClientErrorException(HttpStatusCode.valueOf(500), "Failed to get reviews for restaurant " + restaurantId);
         }
     }
 

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import ru.kishko.client.services.RestaurantService;
 import ru.kishko.client.services.ServiceCaller;
 
@@ -28,11 +29,17 @@ public class CircuitBreakerWithRetry {
                 System.out.println("Request executed successfully.");
                 reset();
                 return result;
+            } catch (HttpClientErrorException e) {
+                if (e.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
+                    System.out.println("Request failed with 500 error. Retrying...");
+                    retryCount++;
+                    Thread.sleep(10000);
+                } else {
+                    throw e; // rethrow the exception if it's not a 500 error
+                }
             } catch (Exception e) {
-                // If request fails, increment failure count
-                System.out.println("Request failed. Retrying...");
-                retryCount++;
-                Thread.sleep(10000);
+                System.out.println(e.getMessage());
+                throw new RuntimeException(e);
             }
         }
 
@@ -40,6 +47,7 @@ public class CircuitBreakerWithRetry {
         System.out.println("Max retries exceeded. Request failed.");
         return new ResponseEntity<>(restaurantService.getAllRestaurants(), HttpStatus.OK);
     }
+
 
     public void reset() {
         isCircuitOpen = false;
