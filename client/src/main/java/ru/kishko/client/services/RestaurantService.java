@@ -2,12 +2,11 @@ package ru.kishko.client.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Limit;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClient;
 import ru.kishko.client.dtos.RestaurantDTO;
 import ru.kishko.client.entities.Restaurant;
+import ru.kishko.client.exceptions.RestaurantNotFound;
 import ru.kishko.client.mappers.RestaurantMapper;
 import ru.kishko.client.repositories.RestaurantRepository;
 
@@ -34,7 +33,7 @@ public class RestaurantService {
     public RestaurantDTO getRestaurantById(Long restaurantId) {
 
         Restaurant restaurant = restaurantRepository.findById(restaurantId).orElseThrow(
-                () -> new RuntimeException("There is no restaurant with id: " + restaurantId)
+                () -> new RestaurantNotFound("There IS no restaurant with id: " + restaurantId)
         );
 
         return restaurantMapper.map(restaurant);
@@ -62,12 +61,8 @@ public class RestaurantService {
     }
 
     public String getRestaurantWithReviews(Long restaurantId) {
-        try {
-            String reviews = webReviewClient.get().uri("/restaurants/" + restaurantId).retrieve().bodyToMono(String.class).block();
-            return getRestaurantById(restaurantId).getName() + reviews;
-        } catch (Exception e) {
-            throw new HttpClientErrorException(HttpStatusCode.valueOf(500), "Failed to get reviews for restaurant " + restaurantId);
-        }
+        String reviews = webReviewClient.get().uri("/restaurants/" + restaurantId).retrieve().bodyToMono(String.class).block();
+        return getRestaurantById(restaurantId).getName() + reviews;
     }
 
 }

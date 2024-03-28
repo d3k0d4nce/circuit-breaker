@@ -52,7 +52,7 @@ public class RestaurantController {
     }
 
     @GetMapping("/reviews/{restaurantId}")
-    public ResponseEntity<?> getRestaurantWithReviews(@PathVariable("restaurantId") Long restaurantId) throws InterruptedException {
+    public ResponseEntity<?> getRestaurantWithReviews(@PathVariable("restaurantId") Long restaurantId) throws Exception {
         ServiceCaller serviceCaller = () -> new ResponseEntity<>(restaurantService.getRestaurantWithReviews(restaurantId), HttpStatus.OK);
         ResponseEntity<?> response = circuitBreaker.executeRequestWithCircuitBreakerAndRetry(serviceCaller);
         return response;
