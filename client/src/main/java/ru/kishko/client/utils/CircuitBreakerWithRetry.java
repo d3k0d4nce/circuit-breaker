@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import ru.kishko.client.exceptions.RestaurantNotFound;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import ru.kishko.client.exceptions.CustomException;
 import ru.kishko.client.services.RestaurantService;
 import ru.kishko.client.services.ServiceCaller;
 
@@ -29,16 +31,14 @@ public class CircuitBreakerWithRetry {
                 System.out.println("Request executed successfully.");
                 reset();
                 return result;
-            } catch (Exception e) {
-                if (e instanceof RestaurantNotFound) {
-                    throw e;
-                }
-                else if (e instanceof RuntimeException) {
+            } catch (WebClientRequestException | WebClientResponseException e) {
+                if (e instanceof WebClientResponseException && ((WebClientResponseException) e).getRawStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR.value() ||
+                        e instanceof WebClientRequestException) {
                     System.out.println("Request failed with 500 error. Retrying...");
                     retryCount++;
                     Thread.sleep(10000);
                 } else {
-                    throw e; // rethrow the exception if it's not a 500 error
+                    throw new CustomException(e.getMessage()); // rethrow the exception if it's not a 500 error
                 }
             }
         }

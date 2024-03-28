@@ -34,4 +34,17 @@ public class ClientExceptionHandler {
 
     }
 
+    @ExceptionHandler(value = {CustomException.class})
+    public ResponseEntity<Object> handleCustomException(CustomException userNotFoundException) {
+
+        ClientException taskException = new ClientException(
+                userNotFoundException.getMessage(),
+                userNotFoundException.getCause(),
+                HttpStatus.NOT_FOUND
+        );
+
+        return new ResponseEntity<>(taskException, taskException.getHttpStatus());
+
+    }
+
 }
