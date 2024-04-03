@@ -1,13 +1,15 @@
 package ru.kishko.server.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.Hibernate;
+
+import java.util.Objects;
 
 @Entity
-@Data
+@Getter
+@Setter
+@ToString
 @AllArgsConstructor
 @Builder
 @NoArgsConstructor
@@ -24,7 +26,16 @@ public class Review {
     @Column(name = "mark")
     private Double mark;
 
-    @Column(name="restaurant_id", nullable=false)
-    private Long restaurantId;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        Review review = (Review) o;
+        return id != null && Objects.equals(id, review.id);
+    }
 
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

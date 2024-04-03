@@ -23,7 +23,4 @@ public class Restaurant {
     @Column(name = "name")
     private String name;
 
-    @ElementCollection
-    private List<Long> reviewsId;
-
 }

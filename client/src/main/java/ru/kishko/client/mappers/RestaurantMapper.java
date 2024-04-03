@@ -12,14 +12,12 @@ public class RestaurantMapper {
     public RestaurantDTO map(Restaurant restaurant) {
         return RestaurantDTO.builder()
                 .name(restaurant.getName())
-                .reviewsId(restaurant.getReviewsId())
                 .build();
     }
 
     public Restaurant map(RestaurantDTO restaurantDTO) {
         return Restaurant.builder()
                 .name(restaurantDTO.getName())
-                .reviewsId(restaurantDTO.getReviewsId())
                 .build();
     }
 }

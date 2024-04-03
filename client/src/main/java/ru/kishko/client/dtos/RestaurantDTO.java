@@ -11,6 +11,4 @@ public class RestaurantDTO {
 
     private String name;
 
-    private List<Long> reviewsId;
-
 }

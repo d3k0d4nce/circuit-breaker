@@ -1,13 +1,15 @@
 package ru.kishko.server.controllers;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.kishko.server.dtos.ReviewDTO;
 import ru.kishko.server.services.ReviewService;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/reviews")
@@ -16,34 +18,28 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @PostMapping
-    public ResponseEntity<ReviewDTO> createReview(@RequestBody ReviewDTO review) {
-        return new ResponseEntity<>(reviewService.createReview(review), HttpStatus.CREATED);
+    int status = 200;
+    @GetMapping("/status")
+    ResponseEntity<String> status(){
+        String response = "Status code: " + status;
+        return new ResponseEntity<>(response, HttpStatusCode.valueOf(status));
     }
 
-    @GetMapping
-    public ResponseEntity<List<ReviewDTO>> getAllReviews() {
-        return new ResponseEntity<>(reviewService.getAllReviews(), HttpStatus.OK);
+    @GetMapping("/create")
+    ResponseEntity<Object> create(ReviewDTO reviewDTO){
+        if (status < 400)
+            return new ResponseEntity<>(reviewService.createReview(reviewDTO), HttpStatusCode.valueOf(status));
+
+        return new ResponseEntity<>("Status code: " + status, HttpStatus.valueOf(status));
+
     }
 
-    @GetMapping("/{reviewId}")
-    public ResponseEntity<ReviewDTO> getReviewById(@PathVariable("reviewId") Long reviewId) {
-        return new ResponseEntity<>(reviewService.getReviewById(reviewId), HttpStatus.OK);
-    }
-
-    @PutMapping("/{reviewId}")
-    public ResponseEntity<ReviewDTO> updateReviewById(@PathVariable("reviewId") Long reviewId, @RequestBody ReviewDTO review) {
-        return new ResponseEntity<>(reviewService.updateReviewById(reviewId, review), HttpStatus.OK);
-    }
-
-    @DeleteMapping("/{reviewId}")
-    public ResponseEntity<String> deleteReviewById(@PathVariable("reviewId") Long reviewId) {
-        return new ResponseEntity<>(reviewService.deleteReviewById(reviewId), HttpStatus.OK);
-    }
-
-    @GetMapping("/restaurants/{restaurantId}")
-    public ResponseEntity<List<ReviewDTO>> getReviewsByRestaurantId(@PathVariable("restaurantId") Long restaurantId) {
-        return new ResponseEntity<>(reviewService.getReviewsByRestaurantId(restaurantId), HttpStatus.OK);
+    @PostMapping("/change/{status}")
+    ResponseEntity<Object> changeStatus(@PathVariable Integer status){
+        if (status < 100 || status >= 600)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        this.status = status;
+        return new ResponseEntity<>("Status changed on: " + status,HttpStatus.OK);
     }
 
 }
