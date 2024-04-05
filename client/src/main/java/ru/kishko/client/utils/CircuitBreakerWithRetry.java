@@ -8,12 +8,14 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import ru.kishko.client.exceptions.CustomException;
 import ru.kishko.client.services.ServiceCaller;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 @Component
 @RequiredArgsConstructor
 public class CircuitBreakerWithRetry {
-    private static final int MAX_RETRIES = 3;
-    private int retryCount = 0;
-    private boolean isCircuitOpen = false;
+
+    private static boolean isCircuitOpen = false;
 
     public ResponseEntity<?> executeRequestWithCircuitBreakerAndRetry(ServiceCaller serviceCaller) throws Exception {
 
@@ -22,34 +24,29 @@ public class CircuitBreakerWithRetry {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Circuit is open. Request not executed.");
         }
 
-        while (retryCount < MAX_RETRIES) {
-            try {
-                isCircuitOpen = true;
-                ResponseEntity<?> result = serviceCaller.call();
-                // If request is successful, reset failure count
-                System.out.println("Request executed successfully.");
-                reset();
-                return result;
-            } catch (WebClientResponseException e) {
-                if (!e.getStatusCode().is5xxServerError()) {
-                    reset();
-                    throw new CustomException(e.getMessage());
-                }
-                System.out.println("Request failed with 500 error. Retrying...");
-                retryCount++;
-                Thread.sleep(10000);
+        try {
+            ResponseEntity<?> result = serviceCaller.call();
+            System.out.println("Request executed successfully.");
+            return result;
+        } catch (WebClientResponseException e) {
+            if (!e.getStatusCode().is5xxServerError()) {
+                throw new CustomException(e.getMessage());
             }
+            System.out.println("Request failed with 500 error. Starting waiting time...");
+            startTime(10000L);
         }
 
-        reset();
-        System.out.println("Max retries exceeded. Request failed.");
-        return new ResponseEntity<>("Max retries exceeded. Request failed.", HttpStatus.OK);
+        System.out.println("INTERNAL_SERVER_ERROR. Wait 10 seconds");
+        return new ResponseEntity<>("INTERNAL_SERVER_ERROR. Waiting 10 seconds.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-
-    public void reset() {
-        isCircuitOpen = false;
-        retryCount = 0;
-        System.out.println("Circuit closed. Resetting failure count.");
+    public void startTime(Long time) {
+        isCircuitOpen = true;
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                isCircuitOpen = false;
+            }
+        }, time);
     }
 }
